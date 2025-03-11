@@ -2,10 +2,60 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bar, Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip } from 'chart.js';  // Import the necessary elements
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Tooltip,
+  Legend,
+  ChartOptions,
+  TooltipItem,
+} from 'chart.js';
 
-// Register elements and scales
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Tooltip,
+  Legend
+);
+
+// Define the options with proper TypeScript types
+const options: ChartOptions<'bar' | 'line'> = {
+  responsive: true,
+  maintainAspectRatio: true, // Set to true to maintain aspect ratio
+  scales: {
+    x: {
+      type: 'category',
+      title: {
+        display: true,
+        text: 'Date',
+      },
+    },
+    y: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: 'Value',
+      },
+    },
+  },
+  plugins: {
+    tooltip: {
+      callbacks: {
+        label: function (tooltipItem: TooltipItem<'bar' | 'line'>) {
+          return `Value: ${tooltipItem.raw}`;
+        },
+      },
+    },
+  },
+};
+
 
 interface StockData {
   date: string;
@@ -17,11 +67,7 @@ interface StockData {
   volume: number;
 }
 
-const options = {
-  responsive: true,
-  maintainAspectRatio: false,
-  // Add other chart options here
-};
+
 
 export default function Home() {
   const [datas, setDatas] = useState<StockData[]>([]);
@@ -124,6 +170,12 @@ export default function Home() {
 
   return (
     <div className="container mx-auto p-6">
+      {/* Dwoload Button */}
+      <div className="absolute top-6 right-6">
+        <button onClick={downloadCSV} className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600">
+          Download CSV
+        </button>
+      </div>
       {/* Navigation Button */}
       <div className="mb-6">
         <Link href="/components/create">
@@ -163,62 +215,58 @@ export default function Home() {
         </select>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+     {/* Charts Section */}
+     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-white p-4 rounded-lg shadow-md">
           <div className="font-semibold text-lg mb-4">Line Chart</div>
-          <Line
-            data={{
-              labels: currentItems.map((data) => data.date),
-              datasets: [
-                {
-                  label: 'Close',
-                  data: currentItems.map((data) => data.close),
-                  backgroundColor: '#064FF0',
-                  borderColor: '#064FF0',
-                },
-              ],
-            }}
-            options={{
-              elements: {
-                line: {
-                  tension: 0.5,
-                },
-              },
-            }}
-          />
+          <div className="chart-container">
+            {currentItems.length > 0 ? (
+              <Line
+                data={{
+                  labels: currentItems.map((data) => data.date),
+                  datasets: [
+                    {
+                      label: 'Close',
+                      data: currentItems.map((data) => data.close),
+                      backgroundColor: '#064FF0',
+                      borderColor: '#064FF0',
+                    },
+                  ],
+                }}
+                options={options}
+              />
+            ) : (
+              <p>No data available for the Line Chart.</p>
+            )}
+          </div>
         </div>
 
         <div className="bg-white p-4 rounded-lg shadow-md">
           <div className="font-semibold text-lg mb-4">Bar Chart</div>
-          <Bar
-            data={{
-              labels: currentItems.map((data) => data.date),
-              datasets: [
-                {
-                  label: 'Volume',
-                  data: currentItems.map((data) => data.volume),
-                  backgroundColor: [
-                    'rgba(43, 63, 229, 0.8)',
-                    'rgba(250, 192, 19, 0.8)',
-                    'rgba(253, 135, 135, 0.8)',
-                  ],
-                  borderRadius: 5,
-                },
-              ],
-            }}
-            options={{
-              plugins: {
-                tooltip: {
-                  callbacks: {
-                    label: function (tooltipItem) {
-                      return `Volume: ${tooltipItem.raw}`;
+          <div className="chart-container">
+            {currentItems.length > 0 ? (
+              <Bar
+                data={{
+                  labels: currentItems.map((data) => data.date),
+                  datasets: [
+                    {
+                      label: 'Volume',
+                      data: currentItems.map((data) => data.volume),
+                      backgroundColor: [
+                        'rgba(43, 63, 229, 0.8)',
+                        'rgba(250, 192, 19, 0.8)',
+                        'rgba(253, 135, 135, 0.8)',
+                      ],
+                      borderRadius: 5,
                     },
-                  },
-                },
-              },
-            }}
-          />
+                  ],
+                }}
+                options={options}
+              />
+            ) : (
+              <p>No data available for the Bar Chart.</p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -279,12 +327,6 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Download CSV Button */}
-      <div className="mt-6">
-        <button onClick={downloadCSV} className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600">
-          Download CSV
-        </button>
-      </div>
     </div>
   );
 }
